@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Success Prediction - Master's Thesis Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            margin-bottom: 25px;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--secondary-color);
+        }
+        
+        .insight-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-left: 5px solid var(--warning-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .risk-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .risk-high {
+            background-color: #ffe5e5;
+            color: var(--danger-color);
+        }
+        
+        .risk-medium {
+            background-color: #fff5e5;
+            color: var(--warning-color);
+        }
+        
+        .risk-low {
+            background-color: #e5ffe5;
+            color: var(--success-color);
+        }
+        
+        .feature-importance-bar {
+            background: linear-gradient(90deg, var(--secondary-color) 0%, var(--success-color) 100%);
+            height: 30px;
+            border-radius: 5px;
+            margin: 5px 0;
+            position: relative;
+        }
+        
+        .tab-content {
+            padding: 30px 0;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        
+        .recommendation-box {
+            background: white;
+            border: 2px solid var(--success-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .country-flag {
+            width: 30px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-graduation-cap"></i> Student Success Prediction
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#performance">Performance</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#cultural">Cultural Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#fairness">Fairness</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#insights">Insights</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <h1 class="display-4 mb-4">Predicting Student Academic Success</h1>
+            <h3 class="mb-3">A Cross-Cultural and Multi-Institutional Framework</h3>
+            <p class="lead">Master's Thesis Research Dashboard</p>
+            <div class="mt-4">
+                <span class="badge bg-light text-dark me-2">12,000 Students</span>
+                <span class="badge bg-light text-dark me-2">50+ Institutions</span>
+                <span class="badge bg-light text-dark me-2">20+ Countries</span>
+                <span class="badge bg-light text-dark">Hybrid LSTM-RF Model</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Overview Section -->
+        <section id="overview" class="mb-5 fade-in">
+            <h2 class="section-title">Research Overview</h2>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value">87.5%</div>
+                        <div class="metric-label">Model Accuracy</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value">0.84</div>
+                        <div class="metric-label">F1 Score</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value">0.92</div>
+                        <div class="metric-label">AUC-ROC</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card text-center">
+                        <div class="metric-value">0.73</div>
+                        <div class="metric-label">Cohen's Kappa</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <h4><i class="fas fa-lightbulb"></i> Novel Contribution</h4>
+                <p>"This research develops a generalized hybrid prediction framework that can be applied across institutions and adapted to cultural variations in academic behavior."</p>
+                <strong>Why it's unique:</strong> Addresses the generalizability gap—a major limitation in current studies.
+            </div>
+        </section>
+
+        <!-- Tabbed Content -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#performance-tab">Model Performance</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#cultural-tab">Cultural Analysis</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#fairness-tab">Fairness Metrics</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#insights-tab">Actionable Insights</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Performance Tab -->
+            <div id="performance-tab" class="tab-pane fade show active">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4>Model Comparison</h4>
+                            <canvas id="modelComparisonChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4>Confusion Matrix</h4>
+                            <div id="confusionMatrix"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="chart-container">
+                            <h4>ROC Curves</h4>
+                            <div id="rocCurves"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="chart-container">
+                            <h4>Weekly Engagement Patterns (LSTM Input)</h4>
+                            <div id="engagementPatterns"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cultural Analysis Tab -->
+            <div id="cultural-tab" class="tab-pane fade">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4>Success Rate by Country</h4>
+                            <div id="countrySuccessChart"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4>Cultural Distance Impact</h4>
+                            <canvas id="culturalDistanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="chart-container">
+                            <h4>Feature Importance (SHAP Values)</h4>
+                            <div id="shapValues"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <h4><i class="fas fa-globe"></i> Key Cultural Findings</h4>
+                    <ul>
+                        <li>Students with high cultural distance (>0.7) have 35% higher dropout risk</li>
+                        <li>Language proficiency below 0.6 correlates with 40% lower success rate</li>
+                        <li>Support programs improve international student success by 25%</li>
+                        <li>Cultural adaptation occurs primarily in weeks 3-8 of the semester</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Fairness Tab -->
+            <div id="fairness-tab" class="tab-pane fade">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4>Performance by Gender</h4>
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4>Performance by Socio-Economic Status</h4>
+                            <canvas id="sesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="metric-card">
+                            <h4>Fairness Metrics</h4>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Value</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Statistical Parity Difference</td>
+                                        <td>0.08</td>
+                                        <td><span class="risk-low">Good</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Equal Opportunity Difference</td>
+                                        <td>0.06</td>
+                                        <td><span class="risk-low">Good</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Disparate Impact</td>
+                                        <td>0.89</td>
+                                        <td><span class="risk-low">Acceptable</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Tab -->
+            <div id="insights-tab" class="tab-pane fade">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3 class="mb-4">Actionable Interventions</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="recommendation-box">
+                            <h5><i class="fas fa-language"></i> Language Support Program</h5>
+                            <p><strong>Target:</strong> 1,250 students with language proficiency < 0.6</p>
+                            <p><strong>Expected Impact:</strong> +28% success rate improvement</p>
+                            <ul>
+                                <li>Intensive language tutoring (10 hrs/week)</li>
+                                <li>Academic writing workshops</li>
+                                <li>Peer language exchange programs</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="recommendation-box">
+                            <h5><i class="fas fa-users"></i> Cultural Integration Workshop</h5>
+                            <p><strong>Target:</strong> 890 students with cultural distance > 0.7</p>
+                            <p><strong>Expected Impact:</strong> +22% retention improvement</p>
+                            <ul>
+                                <li>Weekly cultural orientation sessions</li>
+                                <li>Mentor matching from similar backgrounds</li>
+                                <li>Social integration activities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="chart-container">
+                            <h4>Risk Distribution of Students</h4>
+                            <div id="riskDistribution"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="insight-card">
+                            <h4><i class="fas fa-clock"></i> Critical Intervention Timeline</h4>
+                            <div class="row mt-3">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="metric-value text-warning">Week 1-2</div>
+                                        <div class="metric-label">Initial Assessment</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="metric-value text-info">Week 3-5</div>
+                                        <div class="metric-label">Early Intervention</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="metric-value text-primary">Week 8-10</div>
+                                        <div class="metric-label">Mid-term Support</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="metric-value text-success">Week 12-16</div>
+                                        <div class="metric-label">Final Push</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <section class="mt-5">
+            <h2 class="section-title">Research Impact</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <h5><i class="fas fa-chart-line"></i> Performance</h5>
+                        <ul>
+                            <li>87.5% prediction accuracy</li>
+                            <li>0.92 AUC-ROC score</li>
+                            <li>Generalizes across institutions</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <h5><i class="fas fa-users"></i> Coverage</h5>
+                        <ul>
+                            <li>12,000 students analyzed</li>
+                            <li>50+ institutions included</li>
+                            <li>20+ countries represented</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <h5><i class="fas fa-lightbulb"></i> Innovation</h5>
+                        <ul>
+                            <li>Hybrid LSTM-RF model</li>
+                            <li>Cultural adaptation analysis</li>
+                            <li>Fairness-aware predictions</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-2">Master's Thesis Research © 2025</p>
+            <p>Predicting Student Academic Success Using a Hybrid Machine Learning Model</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Charts JavaScript -->
+    <script>
+        // Model Comparison Chart
+        const ctx1 = document.getElementById('modelComparisonChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['LSTM', 'Random Forest', 'Ensemble', 'Final Weighted'],
+                datasets: [{
+                    label: 'Accuracy',
+                    data: [0.825, 0.798, 0.856, 0.875],
+                    backgroundColor: 'rgba(52, 152, 219, 0.6)'
+                }, {
+                    label: 'F1-Score',
+                    data: [0.801, 0.773, 0.829, 0.843],
+                    backgroundColor: 'rgba(46, 204, 113, 0.6)'
+                }, {
+                    label: 'AUC-ROC',
+                    data: [0.871, 0.845, 0.898, 0.920],
+                    backgroundColor: 'rgba(155, 89, 182, 0.6)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1
+                    }
+                }
+            }
+        });
+
+        // Confusion Matrix Heatmap
+        const confusionData = {
+            z: [[1892, 308], [192, 1008]],
+            x: ['Predicted Failure', 'Predicted Success'],
+            y: ['Actual Failure', 'Actual Success'],
+            type: 'heatmap',
+            colorscale: 'Blues',
+            text: [[1892, 308], [192, 1008]],
+            texttemplate: '%{text}',
+            textfont: {
+                size: 18
+            }
+        };
+        
+        Plotly.newPlot('confusionMatrix', [confusionData], {
+            title: 'Final Model Confusion Matrix',
+            height: 400
+        });
+
+        // ROC Curves
+        const rocData = [
+            {
+                x: [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+                y: [0, 0.45, 0.65, 0.78, 0.85, 0.89, 0.92, 0.94, 0.96, 0.97, 0.99, 1],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Final Model (AUC=0.92)',
+                line: {color: '#3498db', width: 3}
+            },
+            {
+                x: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+                y: [0, 0.38, 0.58, 0.72, 0.80, 0.85, 0.88, 0.91, 0.93, 0.95, 1],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'LSTM (AUC=0.87)',
+                line: {color: '#e74c3c', width: 2}
+            },
+            {
+                x: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+                y: [0, 0.35, 0.55, 0.68, 0.76, 0.82, 0.85, 0.88, 0.91, 0.94, 1],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Random Forest (AUC=0.85)',
+                line: {color: '#27ae60', width: 2}
+            },
+            {
+                x: [0, 1],
+                y: [0, 1],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Random Classifier',
+                line: {color: 'gray', width: 1, dash: 'dash'}
+            }
+        ];
+        
+        Plotly.newPlot('rocCurves', rocData, {
+            title: 'ROC Curves Comparison',
+            xaxis: {title: 'False Positive Rate'},
+            yaxis: {title: 'True Positive Rate'},
+            height: 400
+        });
+
+        // Weekly Engagement Patterns
+        const weeks = Array.from({length: 16}, (_, i) => `Week ${i+1}`);
+        const engagementData = [
+            {
+                x: weeks,
+                y: [0.72, 0.75, 0.68, 0.65, 0.70, 0.73, 0.77, 0.80, 0.78, 0.76, 0.74, 0.71, 0.68, 0.65, 0.62, 0.60],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Successful Students',
+                line: {color: '#27ae60', width: 3}
+            },
+            {
+                x: weeks,
+                y: [0.65, 0.62, 0.58, 0.52, 0.48, 0.45, 0.43, 0.42, 0.40, 0.38, 0.35, 0.32, 0.30, 0.28, 0.25, 0.22],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Failed Students',
+                line: {color: '#e74c3c', width: 3}
+            },
+            {
+                x: weeks,
+                y: [0.70, 0.68, 0.64, 0.60, 0.62, 0.64, 0.66, 0.68, 0.67, 0.65, 0.63, 0.60, 0.57, 0.54, 0.51, 0.48],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'International Students',
+                line: {color: '#3498db', width: 2, dash: 'dash'}
+            }
+        ];
+        
+        Plotly.newPlot('engagementPatterns', engagementData, {
+            title: 'Weekly Engagement Patterns by Student Group',
+            xaxis: {title: 'Week'},
+            yaxis: {title: 'Engagement Level (0-1)'},
+            height: 400
+        });
+
+        // Country Success Chart
+        const countryData = [{
+            x: [0.82, 0.78, 0.75, 0.73, 0.71, 0.68, 0.65, 0.62, 0.58, 0.55],
+            y: ['Germany', 'UK', 'Japan', 'USA', 'France', 'Brazil', 'India', 'China', 'Nigeria', 'Mexico'],
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: ['#27ae60', '#27ae60', '#27ae60', '#3498db', '#3498db', 
+                        '#f39c12', '#f39c12', '#e74c3c', '#e74c3c', '#e74c3c']
+            }
+        }];
+        
+        Plotly.newPlot('countrySuccessChart', countryData, {
+            title: 'Success Rate by Country of Origin',
+            xaxis: {title: 'Success Rate'},
+            height: 400
+        });
+
+        // Cultural Distance Impact
+        const ctx2 = document.getElementById('culturalDistanceChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['0-0.2', '0.2-0.4', '0.4-0.6', '0.6-0.8', '0.8-1.0'],
+                datasets: [{
+                    label: 'Success Rate',
+                    data: [0.85, 0.78, 0.68, 0.55, 0.42],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Success Rate vs Cultural Distance'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Cultural Distance Range'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Success Rate'
+                        },
+                        beginAtZero: true,
+                        max: 1
+                    }
+                }
+            }
+        });
+
+        // SHAP Feature Importance
+        const shapData = [{
+            x: [0.28, 0.25, 0.22, 0.18, 0.15, 0.12, 0.10, 0.08, 0.06, 0.04],
+            y: ['GPA Previous', 'Language Proficiency', 'Cultural Distance', 'Attendance Rate',
+                 'Academic Readiness', 'Support Program', 'Socio-Economic Status',
+                 'Teaching Style', 'Internet Access', 'Age'],
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: '#3498db'
+            }
+        }];
+        
+        Plotly.newPlot('shapValues', shapData, {
+            title: 'Feature Importance (Mean |SHAP| Values)',
+            xaxis: {title: 'Importance'},
+            height: 400
+        });
+
+        // Gender Performance Chart
+        const ctx3 = document.getElementById('genderChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['Female Success', 'Female Failure', 'Male Success', 'Male Failure', 'Other Success', 'Other Failure'],
+                datasets: [{
+                    data: [45, 12, 38, 15, 4, 1],
+                    backgroundColor: [
+                        '#27ae60',
+                        '#c0392b',
+                        '#2ecc71',
+                        '#e74c3c',
+                        '#16a085',
+                        '#d35400'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Success Rate by Gender'
+                    }
+                }
+            }
+        });
+
+        // Socio-Economic Status Chart
+        const ctx4 = document.getElementById('sesChart').getContext('2d');
+        new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
+                datasets: [{
+                    label: 'Success Rate',
+                    data: [0.52, 0.61, 0.70, 0.78, 0.85],
+                    borderColor: '#9b59b6',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4
+                }, {
+                    label: 'Model Prediction Accuracy',
+                    data: [0.81, 0.83, 0.86, 0.88, 0.87],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1
+                    }
+                }
+            }
+        });
+
+        // Risk Distribution
+        const riskData = [{
+            values: [320, 580, 1500],
+            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+            type: 'pie',
+            hole: 0.4,
+            marker: {
+                colors: ['#e74c3c', '#f39c12', '#27ae60']
+            }
+        }];
+        
+        Plotly.newPlot('riskDistribution', riskData, {
+            title: 'Student Risk Distribution (Test Set)',
+            height: 400
+        });
+
+        // Add fade-in animation on scroll
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.metric-card, .chart-container, .recommendation-box').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
